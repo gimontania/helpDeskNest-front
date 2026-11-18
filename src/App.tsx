@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
+import { CategoryCatalog } from './categories/CategoryCatalog'
 import { AppLayout } from './components/AppLayout'
 import { Login } from './components/Login'
 import { sections } from './navigation'
@@ -27,14 +28,20 @@ function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route element={<AppLayout />}>
-        {sections.map(({ path, label, roles }) => (
-          <Route key={path} path={path} element={role && roles.includes(role) ? (
-            <>
-              <h1 className="text-2xl font-bold">{label}</h1>
-              {path !== '/' && <p className="mt-2 text-slate-600">Esta sección está pendiente de implementación.</p>}
-            </>
-          ) : <Navigate to="/" replace />} />
-        ))}
+        {sections.map(({ path, label, roles }) => {
+          if (!role || !roles.includes(role)) {
+            return <Route key={path} path={path} element={<Navigate to="/" replace />} />
+          }
+
+          return (
+            <Route key={path} path={path} element={path === '/categorias' ? <CategoryCatalog /> : (
+              <>
+                <h1 className="text-2xl font-bold">{label}</h1>
+                {path !== '/' && <p className="mt-2 text-slate-600">Esta sección está pendiente de implementación.</p>}
+              </>
+            )} />
+          )
+        })}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
