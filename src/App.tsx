@@ -1,10 +1,11 @@
-import { useEffect } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
-import { CategoryCatalog } from './categories/CategoryCatalog'
-import { AppLayout } from './components/AppLayout'
-import { Login } from './components/Login'
-import { sections } from './navigation'
-import { useSession } from './session'
+import { useEffect } from "react";
+import { Toaster } from "react-hot-toast";
+import { Navigate, Route, Routes } from "react-router-dom";
+import { AppLayout } from "./components/AppLayout";
+import { Login } from "./components/Login";
+import { sections } from "./navigation";
+import { useSession } from "./session";
+import { Categorias } from "./components/Categorias";
 
 function AccessDenied() {
   return (
@@ -13,70 +14,77 @@ function AccessDenied() {
       <p className="mt-3 text-slate-600">
         No tenés permisos para acceder a esta sección.
       </p>
-      <p className="mt-2 text-sm text-slate-500">
-        Tu sesión continúa activa.
-      </p>
+      <p className="mt-2 text-sm text-slate-500">Tu sesión continúa activa.</p>
     </section>
-  )
+  );
 }
 
 function App() {
-  const session = useSession((state) => state.session)
-  const logout = useSession((state) => state.logout)
-  const role = session?.role
+  const session = useSession((state) => state.session);
+  const logout = useSession((state) => state.logout);
+  const role = session?.role;
 
   useEffect(() => {
-    if (!session) return
+    if (!session) return;
 
     const checkExpiry = () => {
-      if (session.expiresAt <= Date.now()) logout()
-    }
+      if (session.expiresAt <= Date.now()) logout();
+    };
 
-    const timer = window.setInterval(checkExpiry, 1_000)
-    window.addEventListener('focus', checkExpiry)
+    const timer = window.setInterval(checkExpiry, 1_000);
+    window.addEventListener("focus", checkExpiry);
 
     return () => {
-      window.clearInterval(timer)
-      window.removeEventListener('focus', checkExpiry)
-    }
-  }, [session, logout])
+      window.clearInterval(timer);
+      window.removeEventListener("focus", checkExpiry);
+    };
+  }, [session, logout]);
 
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
+    <>
+      <Toaster />
+      <Routes>
+        <Route path="/login" element={<Login />} />
 
-      <Route element={<AppLayout />}>
-        {sections.map(({ path, label, roles }) => {
-          if (!role || !roles.includes(role)) {
-            return <Route key={path} path={path} element={<AccessDenied />} />
-          }
+        <Route element={<AppLayout />}>
+          {sections.map(({ path, label, roles }) => {
+            if (!role || !roles.includes(role)) {
+              return (
+                <Route key={path} path={path} element={<AccessDenied />} />
+              );
+            }
 
-          return (
-            <Route
-              key={path}
-              path={path}
-              element={
-                path === '/categorias' ? (
-                  <CategoryCatalog />
-                ) : (
-                  <>
-                    <h1 className="text-2xl font-bold">{label}</h1>
-                    {path !== '/' && (
-                      <p className="mt-2 text-slate-600">
-                        Esta sección está pendiente de implementación.
-                      </p>
-                    )}
-                  </>
-                )
-              }
-            />
-          )
-        })}
+            return (
+              <Route
+                key={path}
+                path={path}
+                element={
+                  role && roles.includes(role) ? (
+                    path === "/categorias" ? (
+                      <Categorias />
+                    ) : (
+                      <>
+                        <h1 className="text-2xl font-bold">{label}</h1>
+                        {path !== "/" && (
+                          <p className="mt-2 text-slate-600">
+                            Esta sección está pendiente de implementación.
+                          </p>
+                        )}
+                      </>
+                    )
+                  ) : (
+                    <Navigate to="/" replace />
+                  )
+                }
+              />
+            );
+          })}
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Route>
-    </Routes>
-  )
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      </Routes>
+    </>
+  );
 }
 
-export default App
+export default App;
