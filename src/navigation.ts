@@ -12,4 +12,5 @@ export const sections: { path: string; label: string; roles: readonly Role[] }[]
   { path: '/tickets/asignados', label: 'Tickets asignados', roles: ['AGENTE'] },
   { path: '/tickets', label: 'Todos los tickets', roles: ['ADMIN'] },
   { path: '/metricas', label: 'Métricas', roles: ['ADMIN'] },
+  { path: '/categorias', label: 'Categorías de soporte', roles: ['ADMIN', 'AGENTE'] },
 ]
