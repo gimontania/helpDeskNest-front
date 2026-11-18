@@ -30,3 +30,19 @@ If you are developing a production application, we recommend enabling type-aware
 ```
 
 See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Navegación por rol (US-03)
+
+Instala las dependencias con `pnpm install --frozen-lockfile` y ejecuta `pnpm dev`. Configura
+`VITE_API_URL` en `.env.local` para apuntar a la API de HelpDeskNest. Si la API tiene
+un origen distinto, habilita CORS para el origen del frontend o sirve la API mediante un proxy del mismo origen.
+
+El inicio de sesión consume `POST /auth/login`. El menú utiliza el rol del JWT y
+el cierre de sesión elimina la sesión de la pestaña. La API aplica sus propios
+permisos. Las rutas de tickets y métricas muestran el título y el estado pendiente
+hasta que se integren sus pantallas.
+
+| Rol | Secciones |
+| --- | --- |
+| Empleado | Inicio, Mis tickets |
+| Agente | Inicio, Tickets asignados |
+| Administrador | Inicio, Todos los tickets, Métricas |
