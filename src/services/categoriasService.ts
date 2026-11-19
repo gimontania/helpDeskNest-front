@@ -8,8 +8,10 @@ const body = ({ nombre, descripcion }: CategoryFormValues) => ({
 
 export const categoriasApi = {
   listar: () => api.get<Category[]>("/categorias").then((r) => r.data),
+
   crear: (values: CategoryFormValues) =>
     api.post<Category>("/categorias", body(values)).then((r) => r.data),
+
   actualizar: (id: string, values: CategoryFormValues) =>
     api
       .patch<Category>(`/categorias/${id}`, {
@@ -17,4 +19,7 @@ export const categoriasApi = {
         descripcion: values.descripcion,
       })
       .then((r) => r.data),
+
+  eliminar: (id: string) =>
+    api.delete<Category>(`/categorias/${id}`).then((r) => r.data),
 };
