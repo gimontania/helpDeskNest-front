@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { isAxiosError } from "axios";
 
 export const tokenKey = "helpdesknest.access_token";
 
@@ -10,6 +10,7 @@ const api = axios.create({
 });
 
 let onUnauthorized: () => void = () => {};
+
 export const setUnauthorizedHandler = (fn: () => void) => {
   onUnauthorized = fn;
 };
@@ -23,8 +24,10 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 && sessionStorage.getItem(tokenKey))
+    if (isAxiosError(error) && error.response?.status === 401) {
       onUnauthorized();
+    }
+
     return Promise.reject(error);
   },
 );
