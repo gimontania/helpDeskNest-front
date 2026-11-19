@@ -1,4 +1,5 @@
-import { TicketList, TicketDetail } from './tickets/Tickets';
+import { TicketDetail } from "./tickets/Tickets";
+import { TicketList } from "./tickets/TicketList";
 import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import { Navigate, Route, Routes } from "react-router-dom";
@@ -61,7 +62,9 @@ function App() {
                 path={path}
                 element={
                   role && roles.includes(role) ? (
-                    path === "/tickets" || path === "/mis-tickets" ? (<TicketList />) : path === "/categorias" ? (
+                    path === "/tickets" || path === "/mis-tickets" ? (
+                      <TicketList />
+                    ) : path === "/categorias" ? (
                       <Categorias />
                     ) : (
                       <>
