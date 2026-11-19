@@ -1,3 +1,4 @@
+import { Inbox, Loader2, Search, User2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { getApiErrorMessage } from "../services/apiErrors";
@@ -8,12 +9,29 @@ import {
   type Ticket,
 } from "../services/tickets";
 import { useSession } from "../session";
-import { EstadoBadge, PrioridadBadge, estadoLabel } from "./TicketBadge";
+import {
+  CategoryBadge,
+  EstadoBadge,
+  PrioridadBadge,
+  estadoLabel,
+} from "./TicketBadge";
 
 type State =
   | { status: "loading" }
   | { status: "error"; message: string }
   | { status: "ready"; tickets: Ticket[] };
+
+const selectClass =
+  "rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-200 transition-colors focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20";
+
+function timeAgo(iso: string): string {
+  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (diff < 60) return "hace un momento";
+  if (diff < 3600) return `hace ${Math.floor(diff / 60)} min`;
+  if (diff < 86400) return `hace ${Math.floor(diff / 3600)} h`;
+  if (diff < 604800) return `hace ${Math.floor(diff / 86400)} d`;
+  return new Date(iso).toLocaleDateString();
+}
 
 export function TicketList() {
   const role = useSession((s) => s.session?.role);
@@ -21,6 +39,7 @@ export function TicketList() {
   const [attempt, setAttempt] = useState(0);
   const [estado, setEstado] = useState<Estado | "">("");
   const [categoriaId, setCategoriaId] = useState("");
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     const request = new AbortController();
@@ -56,23 +75,37 @@ export function TicketList() {
   const titulo = role === "EMPLEADO" ? "Mis tickets" : "Bandeja de tickets";
 
   return (
-    <section className="grid gap-4">
-      <h1 className="text-2xl font-bold">{titulo}</h1>
+    <section className="grid gap-5">
+      <div>
+        <h1 className="text-2xl font-bold text-white">{titulo}</h1>
+        {state.status === "ready" && (
+          <p role="status" className="mt-1 text-sm text-slate-500">
+            {visibles.length} de {tickets.length} tickets
+          </p>
+        )}
+      </div>
 
-      {state.status === "loading" && <p role="status">Cargando tickets…</p>}
+      {state.status === "loading" && (
+        <div
+          role="status"
+          className="flex items-center gap-2 py-10 text-slate-500"
+        >
+          <Loader2 className="h-5 w-5 animate-spin" /> Cargando tickets…
+        </div>
+      )}
 
       {state.status === "error" && (
-        <div>
-          <p role="alert" className="text-red-700">
+        <div className="rounded-xl bg-rose-500/10 p-4 ring-1 ring-inset ring-rose-500/30">
+          <p role="alert" className="text-sm text-rose-300">
             {state.message}
           </p>
           <button
             type="button"
-            className="mt-2 rounded border px-3 py-2 hover:bg-slate-100"
             onClick={() => {
               setState({ status: "loading" });
               setAttempt((v) => v + 1);
             }}
+            className="mt-3 rounded-lg border border-rose-500/30 px-3 py-1.5 text-sm text-rose-200 hover:bg-rose-500/10"
           >
             Reintentar
           </button>
@@ -81,89 +114,105 @@ export function TicketList() {
 
       {state.status === "ready" && (
         <>
-          <div className="flex flex-wrap items-end gap-3">
-            <label className="grid gap-1 text-sm">
-              Estado
-              <select
-                className="rounded-md border border-slate-400 bg-white p-2"
-                value={estado}
-                onChange={(e) => setEstado(e.target.value as Estado | "")}
-              >
-                <option value="">Todos</option>
-                {estados.map((e) => (
-                  <option key={e} value={e}>
-                    {estadoLabel(e)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="grid gap-1 text-sm">
-              Categoría
-              <select
-                className="rounded-md border border-slate-400 bg-white p-2"
-                value={categoriaId}
-                onChange={(e) => setCategoriaId(e.target.value)}
-              >
-                <option value="">Todas</option>
-                {categorias.map(([id, nombre]) => (
-                  <option key={id} value={id}>
-                    {nombre}
-                  </option>
-                ))}
-              </select>
-            </label>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative min-w-52 flex-1 sm:max-w-xs">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar por título…"
+                aria-label="Buscar tickets"
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 py-2 pl-9 pr-3 text-sm text-slate-200 placeholder:text-slate-500 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+              />
+            </div>
+            <select
+              aria-label="Estado"
+              value={estado}
+              onChange={(e) => setEstado(e.target.value as Estado | "")}
+              className={selectClass}
+            >
+              <option value="">Todos los estados</option>
+              {estados.map((e) => (
+                <option key={e} value={e}>
+                  {estadoLabel(e)}
+                </option>
+              ))}
+            </select>
+            <select
+              aria-label="Categoría"
+              value={categoriaId}
+              onChange={(e) => setCategoriaId(e.target.value)}
+              className={selectClass}
+            >
+              <option value="">Todas las categorías</option>
+              {categorias.map(([id, nombre]) => (
+                <option key={id} value={id}>
+                  {nombre}
+                </option>
+              ))}
+            </select>
             {hayFiltros && (
               <button
                 type="button"
-                className="rounded border px-3 py-2 hover:bg-slate-100"
                 onClick={() => {
                   setEstado("");
                   setCategoriaId("");
+                  setSearch("");
                 }}
+                className="rounded-lg px-3 py-2 text-sm text-slate-400 hover:bg-slate-800 hover:text-slate-200"
               >
                 Limpiar filtros
               </button>
             )}
-            <p className="text-sm text-slate-600" role="status">
-              {visibles.length} de {tickets.length} tickets
-            </p>
           </div>
 
-          {tickets.length === 0 && (
-            <p role="status">No hay tickets disponibles.</p>
+          {visibles.length === 0 ? (
+            <div
+              role="status"
+              className="flex flex-col items-center rounded-2xl border border-dashed border-slate-800 py-16 text-center"
+            >
+              <Inbox className="h-10 w-10 text-slate-700" />
+              <p className="mt-3 text-sm font-medium text-slate-400">
+                {tickets.length === 0
+                  ? "No hay tickets disponibles"
+                  : "Ningún ticket coincide con los filtros"}
+              </p>
+            </div>
+          ) : (
+            <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {visibles.map((t) => (
+                <li key={t.id}>
+                  <Link
+                    to={"/tickets/" + t.id}
+                    className="grid h-full min-w-0 gap-3 rounded-2xl border border-slate-800 bg-slate-900 p-4 transition-colors hover:border-slate-700 hover:bg-slate-800/60"
+                  >
+                    <h2 className="line-clamp-2 text-sm font-semibold text-slate-100 wrap-anywhere">
+                      {t.titulo}
+                    </h2>
+                    <div className="flex flex-wrap gap-1.5">
+                      <EstadoBadge estado={t.estado} />
+                      <PrioridadBadge prioridad={t.prioridad} />
+                      <CategoryBadge nombre={t.categoria.nombre} />
+                    </div>
+                    <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                      {role !== "EMPLEADO" && (
+                        <span className="inline-flex items-center gap-1">
+                          <User2 className="h-3 w-3" /> {t.creador.nombre}
+                        </span>
+                      )}
+                      <span>
+                        {t.agente
+                          ? `Responsable: ${t.agente.nombre}`
+                          : "Sin asignar"}
+                      </span>
+                      <span>{timeAgo(t.creadoEn)}</span>
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           )}
-          {tickets.length > 0 && visibles.length === 0 && (
-            <p role="status">Ningún ticket coincide con los filtros.</p>
-          )}
-
-          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {visibles.map((t) => (
-              <li
-                key={t.id}
-                className="grid min-w-0 gap-2 rounded-lg border border-slate-200 bg-white p-4 wrap-anywhere"
-              >
-                <Link
-                  to={"/tickets/" + t.id}
-                  className="font-semibold text-sky-800 underline"
-                >
-                  {t.titulo}
-                </Link>
-                <div className="flex flex-wrap gap-2">
-                  <EstadoBadge estado={t.estado} />
-                  <PrioridadBadge prioridad={t.prioridad} />
-                </div>
-                <p className="text-sm text-slate-600">
-                  Categoría: {t.categoria.nombre}
-                </p>
-                {role !== "EMPLEADO" && (
-                  <p className="text-sm text-slate-600">
-                    Creado por {t.creador.nombre} · Responsable:{" "}
-                    {t.agente?.nombre ?? "Sin asignar"}
-                  </p>
-                )}
-              </li>
-            ))}
-          </ul>
         </>
       )}
     </section>

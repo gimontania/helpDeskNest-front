@@ -32,6 +32,7 @@ export const ticketSchema = z.object({
 });
 
 export type Ticket = z.infer<typeof ticketSchema>;
+export type Agent = z.infer<typeof person>;
 export type Estado = (typeof estados)[number];
 export type Prioridad = (typeof prioridades)[number];
 

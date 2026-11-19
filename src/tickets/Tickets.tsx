@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
+import { ArrowLeft, Calendar, Loader2, Mail, User } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { z } from "zod";
 import { getTicket, type Ticket } from "../services/tickets";
 import { useSession } from "../session";
 import { Assignment } from "./Assignment";
-import { EstadoBadge, PrioridadBadge } from "./TicketBadge";
+import { EstadoBadge, PrioridadBadge, CategoryBadge } from "./TicketBadge";
 
 export function TicketDetail() {
   const { id = "" } = useParams();
@@ -36,38 +37,87 @@ function TicketContent({ id }: { id: string }) {
   const back = role === "EMPLEADO" ? "/mis-tickets" : "/tickets";
   if (error)
     return (
-      <div>
-        <p role="alert">No se pudo cargar el ticket.</p>
+      <div className="rounded-xl bg-rose-500/10 p-4 ring-1 ring-inset ring-rose-500/30">
+        <p role="alert" className="text-sm text-rose-300">
+          No se pudo cargar el ticket.
+        </p>
         <button
           type="button"
-          className="rounded border p-2"
+          className="mt-3 rounded-lg border border-rose-500/30 px-3 py-1.5 text-sm text-rose-200 hover:bg-rose-500/10"
           onClick={() => {
             setError(false);
-            setAttempt((value) => value + 1);
+            setAttempt((v) => v + 1);
           }}
         >
           Reintentar
         </button>
       </div>
     );
-  if (!ticket) return <p role="status">Cargando ticket…</p>;
-  return (
-    <section className="grid min-w-0 gap-4 wrap-anywhere">
-      <Link to={back} className="text-sky-800 underline">
-        Volver a la bandeja
-      </Link>
-      <h1 className="text-2xl font-bold">{ticket.titulo}</h1>
-      <p className="whitespace-pre-wrap">{ticket.descripcion}</p>
-      <div className="flex gap-2">
-        <EstadoBadge estado={ticket.estado} />
-        <PrioridadBadge prioridad={ticket.prioridad} />
+
+  if (!ticket)
+    return (
+      <div
+        role="status"
+        className="flex items-center gap-2 py-10 text-slate-500"
+      >
+        <Loader2 className="h-5 w-5 animate-spin" /> Cargando ticket…
       </div>
-      <p>
-        Responsable: <strong>{ticket.agente?.nombre ?? "Sin asignar"}</strong>
-      </p>
-      {(role === "ADMIN" || role === "AGENTE") && (
-        <Assignment ticket={ticket} onAssigned={setTicket} />
-      )}
+    );
+
+  return (
+    <section className="grid min-w-0 gap-6 wrap-anywhere">
+      <Link
+        to={back}
+        className="inline-flex w-fit items-center gap-1.5 text-sm text-sky-400 hover:text-sky-300"
+      >
+        <ArrowLeft className="h-4 w-4" /> Volver a la bandeja
+      </Link>
+
+      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <EstadoBadge estado={ticket.estado} />
+          <PrioridadBadge prioridad={ticket.prioridad} />
+          <CategoryBadge nombre={ticket.categoria.nombre} />
+        </div>
+        <h1 className="text-xl font-semibold text-white">{ticket.titulo}</h1>
+        <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-slate-500">
+          <span className="inline-flex items-center gap-1.5">
+            <Calendar className="h-3.5 w-3.5" />
+            {new Date(ticket.creadoEn).toLocaleString()}
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <User className="h-3.5 w-3.5" />
+            {ticket.creador.nombre}
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <Mail className="h-3.5 w-3.5" />
+            {ticket.creador.email}
+          </span>
+        </div>
+      </div>
+
+      <div>
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+          Descripción
+        </p>
+        <p className="whitespace-pre-wrap rounded-xl border border-slate-800 bg-slate-800/40 px-4 py-3 text-sm leading-relaxed text-slate-300">
+          {ticket.descripcion}
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+          Responsable
+        </p>
+        <p className="mt-1 text-sm text-slate-200">
+          {ticket.agente?.nombre ?? "Sin asignar"}
+        </p>
+        {(role === "ADMIN" || role === "AGENTE") && (
+          <div className="mt-4 border-t border-slate-800 pt-4">
+            <Assignment ticket={ticket} onAssigned={setTicket} />
+          </div>
+        )}
+      </div>
     </section>
   );
 }
