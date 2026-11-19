@@ -1,3 +1,4 @@
+import { TicketList, TicketDetail } from './tickets/Tickets';
 import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import { Navigate, Route, Routes } from "react-router-dom";
@@ -60,7 +61,7 @@ function App() {
                 path={path}
                 element={
                   role && roles.includes(role) ? (
-                    path === "/categorias" ? (
+                    path === "/tickets" || path === "/mis-tickets" ? (<TicketList />) : path === "/categorias" ? (
                       <Categorias />
                     ) : (
                       <>
@@ -80,6 +81,7 @@ function App() {
             );
           })}
 
+          <Route path="/tickets/:id" element={<TicketDetail />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
