@@ -15,6 +15,7 @@ export function TicketDetail() {
 
 function TicketContent({ id }: { id: string }) {
   const role = useSession((state) => state.session?.role);
+
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
