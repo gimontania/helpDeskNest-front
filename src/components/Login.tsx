@@ -1,9 +1,10 @@
-import { isAxiosError } from "axios";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Navigate } from "react-router-dom";
 import { z } from "zod";
+import { getApiErrorMessage } from "../services/apiErrors";
 import { useSession } from "../session";
 
 const schema = z.object({
@@ -14,29 +15,37 @@ const schema = z.object({
     .email("Correo electrónico inválido."),
   password: z.string().min(1, "Ingresa tu contraseña."),
 });
+
 type FormValues = z.infer<typeof schema>;
 
 export function Login() {
   const session = useSession((state) => state.session);
   const login = useSession((state) => state.login);
   const [error, setError] = useState("");
+
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) });
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+  });
 
-  if (session) return <Navigate to="/" replace />;
+  if (session) {
+    return <Navigate to="/" replace />;
+  }
 
   const onSubmit = handleSubmit(async ({ email, password }) => {
     setError("");
+
     try {
       await login(email, password);
     } catch (err) {
       setError(
-        isAxiosError(err) && err.response?.status === 401
-          ? "El correo o la contraseña son incorrectos."
-          : "No se pudo iniciar sesión. Intenta de nuevo.",
+        getApiErrorMessage(
+          err,
+          "No se pudo iniciar sesión. Intenta nuevamente.",
+        ),
       );
     }
   });
@@ -60,6 +69,7 @@ export function Login() {
             aria-describedby={errors.email ? "email-error" : undefined}
             {...register("email")}
           />
+
           {errors.email && (
             <span
               id="email-error"
@@ -78,9 +88,12 @@ export function Login() {
             type="password"
             autoComplete="current-password"
             aria-invalid={!!errors.password}
-            aria-describedby={errors.password ? "password-error" : undefined}
+            aria-describedby={
+              errors.password ? "password-error" : undefined
+            }
             {...register("password")}
           />
+
           {errors.password && (
             <span
               id="password-error"
