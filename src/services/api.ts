@@ -1,5 +1,6 @@
-
 import axios from "axios";
+import toast from "react-hot-toast";
+import { getApiErrorMessage } from "./apiErrors";
 
 export const tokenKey = "helpdesknest.access_token";
 
@@ -37,7 +38,6 @@ export const setUnauthorizedHandler = (handler: () => void) => {
   onUnauthorized = handler;
 };
 
-// Agrega automáticamente el JWT a las peticiones.
 api.interceptors.request.use((config) => {
   const token = sessionStorage.getItem(tokenKey);
 
@@ -48,18 +48,27 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Centraliza el comportamiento de las respuestas HTTP.
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (
-      axios.isAxiosError(error) &&
-      error.response?.status === 401 &&
-      sessionStorage.getItem(tokenKey)
-    ) {
-      onUnauthorized();
-    }
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const hadSession = !!sessionStorage.getItem(tokenKey);
 
+      if (status === 401 && hadSession) {
+        onUnauthorized();
+        toast.error("Tu sesión expiró. Inicia sesión de nuevo.", {
+          id: "session-expired",
+        });
+      } else if (status === 403) {
+        toast.error(
+          "Acceso denegado: no tienes permisos para esta operación.",
+          { id: "forbidden" },
+        );
+      } else if (!error.response) {
+        toast.error(getApiErrorMessage(error), { id: "network-error" });
+      }
+    }
     return Promise.reject(error);
   },
 );

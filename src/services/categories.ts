@@ -35,3 +35,7 @@ export async function updateCategory(
   });
   return categorySchema.parse(data);
 }
+
+export async function deleteCategory(id: string): Promise<void> {
+  await api.delete(`/categorias/${id}`);
+}

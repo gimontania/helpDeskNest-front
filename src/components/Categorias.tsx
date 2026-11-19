@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { isAxiosError } from "axios";
 import toast from "react-hot-toast";
-import { categoriasApi } from "../services/categoriasService";
+import {
+  createCategory,
+  deleteCategory,
+  listCategories,
+  updateCategory,
+} from "../services/categories";
 import type { Category, CategoryFormValues } from "../schemas/categorySchema";
 import { CategoryForm } from "./CategoryForm";
 
@@ -10,14 +15,16 @@ export function Categorias() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [editing, setEditing] = useState<Category | null>(null);
-  const [selectedToDelete, setSelectedToDelete] = useState<Category | null>(null);
+  const [selectedToDelete, setSelectedToDelete] = useState<Category | null>(
+    null,
+  );
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
   const cargar = useCallback(async () => {
     setLoadError("");
     try {
-      setItems(await categoriasApi.listar());
+      setItems(await listCategories());
     } catch {
       setLoadError("No se pudo cargar el catálogo.");
     } finally {
@@ -30,14 +37,14 @@ export function Categorias() {
   }, [cargar]);
 
   async function crear(values: CategoryFormValues) {
-    await categoriasApi.crear(values);
+    await createCategory(values);
     toast.success("Categoría creada");
     await cargar();
   }
 
   async function actualizar(values: CategoryFormValues) {
     if (!editing) return;
-    await categoriasApi.actualizar(editing.id, values);
+    await updateCategory(editing.id, values);
     toast.success("Categoría actualizada");
     setEditing(null);
     await cargar();
@@ -55,7 +62,7 @@ export function Categorias() {
     setDeleteError("");
 
     try {
-      await categoriasApi.eliminar(selectedToDelete.id);
+      await deleteCategory(selectedToDelete.id);
       toast.success("Categoría eliminada");
       setSelectedToDelete(null);
       await cargar();
