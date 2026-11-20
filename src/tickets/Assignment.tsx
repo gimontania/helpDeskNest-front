@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { isAxiosError } from "axios";
+import toast from "react-hot-toast";
 import {
   listAgents,
   assignAgent,
@@ -20,7 +21,6 @@ export function Assignment({
   const [attempt, setAttempt] = useState(0);
   const [selected, setSelected] = useState("");
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -50,12 +50,11 @@ export function Assignment({
       return;
     setSaving(true);
     setError("");
-    setMessage("");
     try {
       const confirmed = await assignAgent(ticket.id, selected);
       onAssigned(confirmed);
       setSelected("");
-      setMessage("Responsable actualizado.");
+      toast.success("Responsable actualizado.", { id: "assign-success" });
     } catch (error) {
       setError(
         isAxiosError(error) && error.response?.status === 403
@@ -97,7 +96,6 @@ export function Assignment({
           onChange={(event) => {
             setSelected(event.target.value);
             setError("");
-            setMessage("");
           }}
           disabled={saving}
           required
@@ -123,7 +121,6 @@ export function Assignment({
           {error}
         </p>
       )}
-      {message && <p role="status">{message}</p>}
     </form>
   );
 }

@@ -2,6 +2,7 @@ import { Headset, LogOut, Menu } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
 import { roleLabels, sections } from "../navigation";
+import { useNotifications } from "../notifications/useNotifications";
 import { useSession } from "../session";
 
 function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -94,6 +95,8 @@ export function AppLayout() {
   const session = useSession((s) => s.session);
   const [open, setOpen] = useState(false);
   const location = useLocation();
+
+  useNotifications();
 
   useEffect(() => setOpen(false), [location.pathname]);
 
