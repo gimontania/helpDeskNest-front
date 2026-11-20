@@ -16,6 +16,6 @@ export const sections: {
   { path: "/tickets/nuevo", label: "Crear ticket", roles: ["EMPLEADO"] },
   { path: "/tickets/asignados", label: "Tickets asignados", roles: ["AGENTE"] },
   { path: "/tickets", label: "Todos los tickets", roles: ["ADMIN", "AGENTE"] },
-  { path: "/metricas", label: "Métricas", roles: ["ADMIN"] },
+  { path: "/metricas", label: "Métricas", roles: ["ADMIN", "AGENTE"] },
   { path: "/categorias", label: "Categorías", roles: ["ADMIN", "AGENTE"] },
 ];

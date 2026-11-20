@@ -1,3 +1,5 @@
+import { TicketDetail } from "./tickets/Tickets";
+import { TicketList } from "./tickets/TicketList";
 import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import { Navigate, Route, Routes } from "react-router-dom";
@@ -5,10 +7,10 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "./components/AppLayout";
 import { Login } from "./components/Login";
 import { Categorias } from "./components/Categorias";
-import { TicketList, TicketDetail } from "./tickets/Tickets";
 import { CreateTicket } from "./tickets/CreateTicket";
 import { sections } from "./navigation";
 import { useSession } from "./session";
+import { Metricas } from "./metrics/Metricas";
 
 function AccessDenied() {
   return (
@@ -24,6 +26,31 @@ function AccessDenied() {
       </p>
     </section>
   );
+}
+
+function renderSection(path: string, label: string) {
+  switch (path) {
+    case "/tickets":
+    case "/mis-tickets":
+      return <TicketList />;
+    case "/tickets/nuevo":
+      return <CreateTicket />;
+    case "/categorias":
+      return <Categorias />;
+    case "/metricas":
+      return <Metricas />;
+    default:
+      return (
+        <>
+          <h1 className="text-2xl font-bold text-white">{label}</h1>
+          {path !== "/" && (
+            <p className="mt-2 text-slate-400">
+              Esta sección está pendiente de implementación.
+            </p>
+          )}
+        </>
+      );
+  }
 }
 
 function App() {
@@ -65,36 +92,6 @@ function App() {
                 />
               );
             }
-
-            let element;
-
-            if (path === "/tickets" || path === "/mis-tickets") {
-              element = <TicketList />;
-            } else if (path === "/tickets/nuevo") {
-              element = <CreateTicket />;
-            } else if (path === "/categorias") {
-              element = <Categorias />;
-            } else {
-              element = (
-                <>
-                  <h1 className="text-2xl font-bold">{label}</h1>
-                  {path !== "/" && (
-                    <p className="mt-2 text-slate-600">
-                      Esta sección está pendiente de implementación.
-                    </p>
-                  )}
-                </>
-              );
-            }
-
-            return (
-              <Route
-                key={path}
-                path={path}
-                element={element}
-              />
-            );
-          })}
 
           <Route path="/tickets/:id" element={<TicketDetail />} />
           <Route path="*" element={<Navigate to="/" replace />} />
