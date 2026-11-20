@@ -70,6 +70,10 @@ El frontend no tiene un script test en package.json. Las pruebas manuales y de i
 
 El workflow usa las acciones oficiales. [Checkout](https://github.com/actions/checkout), [setup-node](https://github.com/actions/setup-node).
 
+## Evidencia de esta entrega
+
+El [PR #12](https://github.com/gimontania/helpDeskNest-front/pull/12) publica esta auditoría desde chore/qa-integracion-documentacion. La [primera ejecución de QA SPA](https://github.com/gimontania/helpDeskNest-front/actions/runs/44753809205), sobre el commit 29e34cb, terminó con resultado success. Verificó instalación, lint y compilación en GitHub Actions. La revisión por otro integrante sigue pendiente.
+
 ## Pendientes para cerrar el ticket
 
 1. Contrastar los cuatro autores detectados con la lista definitiva de integrantes.
