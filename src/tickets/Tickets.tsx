@@ -5,36 +5,88 @@ import { getTicket, listTickets, type Ticket } from '../services/tickets'
 import { useSession } from '../session'
 import { Assignment } from './Assignment'
 
+
 export function TicketList() {
-  const [tickets, setTickets] = useState<Ticket[] | null>(null)
-  const [error, setError] = useState(false)
-  const [attempt, setAttempt] = useState(0)
+  const role = useSession((state) => state.session?.role);
+  const [tickets, setTickets] = useState<Ticket[] | null>(null);
+  const [error, setError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+
   useEffect(() => {
-    const request = new AbortController()
+    const request = new AbortController();
+
     listTickets(request.signal).then(
-      result => { if (!request.signal.aborted) setTickets(result) },
-      () => { if (!request.signal.aborted) setError(true) },
-    )
-    return () => request.abort()
-  }, [attempt])
+      (result) => {
+        if (!request.signal.aborted) setTickets(result);
+      },
+      () => {
+        if (!request.signal.aborted) setError(true);
+      },
+    );
+
+    return () => request.abort();
+  }, [attempt]);
 
   return (
     <section className="grid gap-4">
-      <h1 className="text-2xl font-bold">Tickets de soporte</h1>
-      {error ? <div><p role="alert">No se pudo cargar la bandeja.</p><button type="button" className="rounded border p-2"
-        onClick={() => { setError(false); setAttempt(value => value + 1) }}>Reintentar</button></div>
-        : tickets === null ? <p role="status">Cargando tickets…</p>
-        : tickets.length === 0 ? <p role="status">No hay tickets disponibles.</p>
-        : <ul className="grid gap-3 sm:grid-cols-2">
-          {tickets.map(ticket => <li key={ticket.id} className="min-w-0 rounded border bg-white p-4 wrap-anywhere">
-            <Link to={'/tickets/' + ticket.id} className="font-semibold text-sky-800 underline">{ticket.titulo}</Link>
-            <p>{ticket.estado} · {ticket.prioridad}</p>
-            <p>Responsable: {ticket.agente?.nombre ?? 'Sin asignar'}</p>
-          </li>)}
-        </ul>}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold">Tickets de soporte</h1>
+
+        {role === "EMPLEADO" && (
+          <Link
+            to="/tickets/nuevo"
+            className="rounded-md bg-sky-800 px-4 py-2 font-semibold text-white hover:bg-sky-900"
+          >
+            + Crear ticket
+          </Link>
+        )}
+      </div>
+
+      {error ? (
+        <div>
+          <p role="alert">No se pudo cargar la bandeja.</p>
+          <button
+            type="button"
+            className="rounded border p-2"
+            onClick={() => {
+              setError(false);
+              setAttempt((value) => value + 1);
+            }}
+          >
+            Reintentar
+          </button>
+        </div>
+      ) : tickets === null ? (
+        <p role="status">Cargando tickets…</p>
+      ) : tickets.length === 0 ? (
+        <p role="status">No hay tickets disponibles.</p>
+      ) : (
+        <ul className="grid gap-3 sm:grid-cols-2">
+          {tickets.map((ticket) => (
+            <li
+              key={ticket.id}
+              className="min-w-0 rounded border bg-white p-4 wrap-anywhere"
+            >
+              <Link
+                to={"/tickets/" + ticket.id}
+                className="font-semibold text-sky-800 underline"
+              >
+                {ticket.titulo}
+              </Link>
+              <p>
+                {ticket.estado} · {ticket.prioridad}
+              </p>
+              <p>
+                Responsable: {ticket.agente?.nombre ?? "Sin asignar"}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
-  )
+  );
 }
+
 
 export function TicketDetail() {
   const { id = '' } = useParams()
