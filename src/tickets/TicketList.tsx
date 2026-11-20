@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { getApiErrorMessage } from "../services/apiErrors";
 import {
   estados,
+  estadoLabel,
   listTickets,
   type Estado,
   type Ticket,
@@ -13,7 +14,6 @@ import {
   CategoryBadge,
   EstadoBadge,
   PrioridadBadge,
-  estadoLabel,
 } from "./TicketBadge";
 
 type State =
