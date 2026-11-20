@@ -1,4 +1,5 @@
-import { BarChart3, Loader2 } from "lucide-react";
+import { LoadingState, ErrorState, EmptyState } from "../feedback/States";
+import {} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
   Bar,
@@ -114,42 +115,20 @@ export function Metricas() {
       </div>
 
       {state.status === "loading" && (
-        <div
-          role="status"
-          className="flex items-center gap-2 py-10 text-slate-500"
-        >
-          <Loader2 className="h-5 w-5 animate-spin" /> Cargando métricas…
-        </div>
+        <LoadingState message="Cargando métricas…" />
       )}
-
       {state.status === "error" && (
-        <div className="rounded-xl bg-rose-500/10 p-4 ring-1 ring-inset ring-rose-500/30">
-          <p role="alert" className="text-sm text-rose-300">
-            {state.message}
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              setState({ status: "loading" });
-              setAttempt((v) => v + 1);
-            }}
-            className="mt-3 rounded-lg border border-rose-500/30 px-3 py-1.5 text-sm text-rose-200 hover:bg-rose-500/10"
-          >
-            Reintentar
-          </button>
-        </div>
+        <ErrorState
+          message={state.message}
+          onRetry={() => {
+            setState({ status: "loading" });
+            setAttempt((value) => value + 1);
+          }}
+        />
       )}
 
       {metrics && metrics.total === 0 && (
-        <div
-          role="status"
-          className="flex flex-col items-center rounded-2xl border border-dashed border-slate-800 py-16 text-center"
-        >
-          <BarChart3 className="h-10 w-10 text-slate-700" />
-          <p className="mt-3 text-sm font-medium text-slate-400">
-            Aún no hay tickets para mostrar métricas.
-          </p>
-        </div>
+        <EmptyState message="Aún no hay tickets para mostrar métricas." />
       )}
 
       {metrics && metrics.total > 0 && (

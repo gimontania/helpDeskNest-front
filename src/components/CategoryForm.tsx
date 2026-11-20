@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { isAxiosError } from "axios";
+import { normalizeApiError } from "../services/apiErrors";
+import { ErrorState, LoadingState } from "../feedback/States";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import {
@@ -36,20 +37,16 @@ export function CategoryForm({ categoria, onSubmit, onCancel }: Props) {
       await onSubmit(values);
       if (!categoria) reset({ nombre: "", descripcion: "" });
     } catch (err) {
-      if (isAxiosError(err) && err.response?.status === 409) {
+      const error = normalizeApiError(err);
+      if (error.status === 409)
         setError("nombre", {
           message: "Ya existe una categoría con ese nombre.",
         });
-      } else if (isAxiosError(err) && err.response?.status === 403) {
-        setApiError("No tienes permisos para esta acción.");
-      } else {
-        const msg = isAxiosError(err) ? err.response?.data?.message : undefined;
-        setApiError(
-          Array.isArray(msg)
-            ? msg.join(" ")
-            : (msg ?? "No se pudo guardar la categoría. Intenta de nuevo."),
-        );
+      for (const field of ["nombre", "descripcion"] as const) {
+        if (error.fields[field])
+          setError(field, { message: error.fields[field] });
       }
+      setApiError(error.message);
     }
   });
 
@@ -82,14 +79,23 @@ export function CategoryForm({ categoria, onSubmit, onCancel }: Props) {
         <textarea
           rows={3}
           className="rounded-md border border-slate-400 p-2"
+          aria-invalid={!!errors.descripcion}
           {...register("descripcion")}
         />
+        {errors.descripcion && (
+          <span role="alert" className="text-sm text-red-700">
+            {errors.descripcion.message}
+          </span>
+        )}
       </label>
 
+      {isSubmitting && <LoadingState message="Guardando categoría…" />}
       {apiError && (
-        <p role="alert" className="text-sm text-red-700">
-          {apiError}
-        </p>
+        <ErrorState
+          message={apiError}
+          onRetry={() => void submit()}
+          disabled={isSubmitting}
+        />
       )}
 
       <div className="flex gap-2">
@@ -107,6 +113,7 @@ export function CategoryForm({ categoria, onSubmit, onCancel }: Props) {
         {onCancel && (
           <button
             type="button"
+            disabled={isSubmitting}
             onClick={onCancel}
             className="rounded-md border border-slate-300 px-4 py-2 hover:bg-slate-100"
           >

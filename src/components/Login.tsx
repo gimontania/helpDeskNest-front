@@ -1,10 +1,11 @@
+import { ErrorState, LoadingState } from "../feedback/States";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, Headset, Loader2, Lock, Mail } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Navigate } from "react-router-dom";
 import { z } from "zod";
-import { getApiErrorMessage } from "../services/apiErrors";
+import { normalizeApiError } from "../services/apiErrors";
 import { useSession } from "../session";
 
 const schema = z.object({
@@ -24,11 +25,12 @@ const inputClass =
 export function Login() {
   const session = useSession((state) => state.session);
   const login = useSession((state) => state.login);
-  const [error, setError] = useState("");
+  const [error, setApiError] = useState("");
 
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -39,17 +41,17 @@ export function Login() {
   }
 
   const onSubmit = handleSubmit(async ({ email, password }) => {
-    setError("");
+    setApiError("");
 
     try {
       await login(email, password);
     } catch (err) {
-      setError(
-        getApiErrorMessage(
-          err,
-          "No se pudo iniciar sesión. Intenta nuevamente.",
-        ),
-      );
+      const normalized = normalizeApiError(err);
+      for (const field of ["email", "password"] as const) {
+        if (normalized.fields[field])
+          setError(field, { message: normalized.fields[field] });
+      }
+      setApiError(normalized.message);
     }
   });
 
@@ -127,13 +129,13 @@ export function Login() {
             )}
           </div>
 
+          {isSubmitting && <LoadingState message="Iniciando sesión…" />}
           {error && (
-            <p
-              role="alert"
-              className="rounded-lg bg-rose-500/10 px-3.5 py-2.5 text-sm text-rose-300 ring-1 ring-inset ring-rose-500/30"
-            >
-              {error}
-            </p>
+            <ErrorState
+              message={error}
+              onRetry={() => void onSubmit()}
+              disabled={isSubmitting}
+            />
           )}
 
           <button

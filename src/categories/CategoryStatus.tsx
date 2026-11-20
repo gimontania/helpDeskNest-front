@@ -1,37 +1,15 @@
-
 import type { useCategories } from "./useCategories";
+import { LoadingState, ErrorState, EmptyState } from "../feedback/States";
 
 export function CategoryStatus({
   catalog,
   retry,
 }: ReturnType<typeof useCategories>) {
-  if (catalog.status === "loading") {
-    return <p role="status">Cargando categorías…</p>;
-  }
-
-  if (catalog.status === "error") {
-    return (
-      <div className="grid justify-items-start gap-2">
-        <p role="alert">{catalog.message}</p>
-
-        <button
-          type="button"
-          onClick={retry}
-          className="rounded-md border border-slate-400 px-3 py-2"
-        >
-          Reintentar
-        </button>
-      </div>
-    );
-  }
-
-  if (catalog.status === "ready" && catalog.categories.length === 0) {
-    return (
-      <p role="status">
-        Todavía no hay categorías de soporte.
-      </p>
-    );
-  }
-
+  if (catalog.status === "loading")
+    return <LoadingState message="Cargando categorías…" />;
+  if (catalog.status === "error")
+    return <ErrorState message={catalog.message} onRetry={retry} />;
+  if (catalog.categories.length === 0)
+    return <EmptyState message="Todavía no hay categorías de soporte." />;
   return null;
 }

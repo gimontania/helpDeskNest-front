@@ -1,5 +1,11 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { isAxiosError } from "axios";
+import { getApiErrorMessage } from "../services/apiErrors";
+import {
+  LoadingState,
+  ErrorState,
+  EmptyState,
+  SuccessState,
+} from "../feedback/States";
 import {
   listAgents,
   assignAgent,
@@ -40,8 +46,8 @@ export function Assignment({
     return () => request.abort();
   }, [attempt]);
 
-  async function submit(event: FormEvent) {
-    event.preventDefault();
+  async function submit(event?: FormEvent) {
+    event?.preventDefault();
     if (
       saving ||
       !agents.some((agent) => agent.id === selected) ||
@@ -57,36 +63,26 @@ export function Assignment({
       setSelected("");
       setMessage("Responsable actualizado.");
     } catch (error) {
-      setError(
-        isAxiosError(error) && error.response?.status === 403
-          ? "La API no autoriza a tu rol a asignar este ticket."
-          : "No se pudo confirmar la asignación. Consulta el ticket antes de reintentar.",
-      );
+      setError(getApiErrorMessage(error));
     } finally {
       setSaving(false);
     }
   }
 
-  if (loading) return <p role="status">Cargando agentes elegibles…</p>;
+  if (loading) return <LoadingState message="Cargando agentes elegibles…" />;
   if (loadError)
     return (
-      <div>
-        <p role="alert">No se pudieron cargar los agentes.</p>
-        <button
-          type="button"
-          onClick={() => {
-            setLoading(true);
-            setLoadError(false);
-            setAttempt((value) => value + 1);
-          }}
-          className="rounded border px-3 py-2"
-        >
-          Reintentar
-        </button>
-      </div>
+      <ErrorState
+        message="No se pudieron cargar los agentes."
+        onRetry={() => {
+          setLoading(true);
+          setLoadError(false);
+          setAttempt((value) => value + 1);
+        }}
+      />
     );
   if (agents.length === 0)
-    return <p role="status">No hay agentes elegibles disponibles.</p>;
+    return <EmptyState message="No hay agentes elegibles disponibles." />;
 
   return (
     <form onSubmit={submit} className="grid max-w-lg gap-3">
@@ -119,11 +115,14 @@ export function Assignment({
         {saving ? "Asignando…" : "Asignar responsable"}
       </button>
       {error && (
-        <p role="alert" className="text-red-700">
-          {error}
-        </p>
+        <ErrorState
+          message={error}
+          onRetry={() => void submit()}
+          disabled={saving}
+        />
       )}
-      {message && <p role="status">{message}</p>}
+      {message && <SuccessState message={message} />}
+      {saving && <LoadingState message="Asignando responsable…" />}
     </form>
   );
 }

@@ -1,4 +1,5 @@
-import { Inbox, Loader2, Search, User2 } from "lucide-react";
+import { LoadingState, ErrorState, EmptyState } from "../feedback/States";
+import { Search, User2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { getApiErrorMessage } from "../services/apiErrors";
@@ -10,11 +11,7 @@ import {
   type Ticket,
 } from "../services/tickets";
 import { useSession } from "../session";
-import {
-  CategoryBadge,
-  EstadoBadge,
-  PrioridadBadge,
-} from "./TicketBadge";
+import { CategoryBadge, EstadoBadge, PrioridadBadge } from "./TicketBadge";
 
 type State =
   | { status: "loading" }
@@ -58,7 +55,10 @@ export function TicketList() {
     return () => request.abort();
   }, [attempt]);
 
-  const tickets = state.status === "ready" ? state.tickets : [];
+  const tickets = useMemo(
+    () => (state.status === "ready" ? state.tickets : []),
+    [state],
+  );
 
   const categorias = useMemo(() => {
     const map = new Map<string, string>();
@@ -86,30 +86,16 @@ export function TicketList() {
       </div>
 
       {state.status === "loading" && (
-        <div
-          role="status"
-          className="flex items-center gap-2 py-10 text-slate-500"
-        >
-          <Loader2 className="h-5 w-5 animate-spin" /> Cargando tickets…
-        </div>
+        <LoadingState message="Cargando tickets…" />
       )}
-
       {state.status === "error" && (
-        <div className="rounded-xl bg-rose-500/10 p-4 ring-1 ring-inset ring-rose-500/30">
-          <p role="alert" className="text-sm text-rose-300">
-            {state.message}
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              setState({ status: "loading" });
-              setAttempt((v) => v + 1);
-            }}
-            className="mt-3 rounded-lg border border-rose-500/30 px-3 py-1.5 text-sm text-rose-200 hover:bg-rose-500/10"
-          >
-            Reintentar
-          </button>
-        </div>
+        <ErrorState
+          message={state.message}
+          onRetry={() => {
+            setState({ status: "loading" });
+            setAttempt((value) => value + 1);
+          }}
+        />
       )}
 
       {state.status === "ready" && (
@@ -168,17 +154,13 @@ export function TicketList() {
           </div>
 
           {visibles.length === 0 ? (
-            <div
-              role="status"
-              className="flex flex-col items-center rounded-2xl border border-dashed border-slate-800 py-16 text-center"
-            >
-              <Inbox className="h-10 w-10 text-slate-700" />
-              <p className="mt-3 text-sm font-medium text-slate-400">
-                {tickets.length === 0
+            <EmptyState
+              message={
+                tickets.length === 0
                   ? "No hay tickets disponibles"
-                  : "Ningún ticket coincide con los filtros"}
-              </p>
-            </div>
+                  : "Ningún ticket coincide con los filtros"
+              }
+            />
           ) : (
             <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {visibles.map((t) => (
