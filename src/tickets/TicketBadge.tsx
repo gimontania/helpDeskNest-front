@@ -38,8 +38,6 @@ const prioridadStyle: Record<Prioridad, { label: string; cls: string }> = {
   },
 };
 
-export const estadoLabel = (e: Estado) => estadoStyle[e].label;
-
 export function EstadoBadge({ estado }: { estado: Estado }) {
   const { label, cls } = estadoStyle[estado];
   return <span className={`${base} ${cls}`}>{label}</span>;

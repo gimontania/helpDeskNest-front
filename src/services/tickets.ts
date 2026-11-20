@@ -27,7 +27,7 @@ export const ticketSchema = z.object({
   categoria: z.object({ id: z.uuid(), nombre: z.string() }),
   creadoEn: z.string(),
   creador: person,
-  agenteId: z.uuid().nullable(),
+  agenteId: z.string().uuid().nullable(),
   agente: person.nullable(),
 });
 
@@ -35,6 +35,28 @@ export type Ticket = z.infer<typeof ticketSchema>;
 export type Agent = z.infer<typeof person>;
 export type Estado = (typeof estados)[number];
 export type Prioridad = (typeof prioridades)[number];
+
+const siguienteEstado: Record<Estado, Estado | null> = {
+  ABIERTO: "EN_PROCESO",
+  EN_PROCESO: "RESUELTO",
+  RESUELTO: "CERRADO",
+  CERRADO: null,
+};
+
+const etiquetasEstado: Record<Estado, string> = {
+  ABIERTO: "Abierto",
+  EN_PROCESO: "En proceso",
+  RESUELTO: "Resuelto",
+  CERRADO: "Cerrado",
+};
+
+export function obtenerSiguienteEstado(estado: Estado) {
+  return siguienteEstado[estado];
+}
+
+export function estadoLabel(estado: Estado) {
+  return etiquetasEstado[estado];
+}
 
 export async function listTickets(signal: AbortSignal) {
   const { data } = await api.get("/tareas", { signal });
@@ -60,6 +82,7 @@ export async function listAgents(signal: AbortSignal) {
 export async function assignAgent(id: string, agenteId: string) {
   const { data } = await api.patch("/tareas/" + id + "/agente", { agenteId });
   const confirmed = ticketSchema.parse(data);
+
   if (
     confirmed.id !== id ||
     confirmed.agenteId !== agenteId ||
@@ -67,5 +90,23 @@ export async function assignAgent(id: string, agenteId: string) {
   ) {
     throw new Error("La API no confirmó la asignación solicitada");
   }
+
+  return confirmed;
+}
+
+export async function changeTicketStatus(id: string, estado: Estado) {
+  const { data } = await api.patch("/tareas/" + id + "/estado", { estado });
+
+  const confirmed = z
+    .object({
+      id: z.uuid(),
+      estado: z.enum(estados),
+    })
+    .parse(data);
+
+  if (confirmed.id !== id || confirmed.estado !== estado) {
+    throw new Error("La API no confirmó el cambio de estado solicitado");
+  }
+
   return confirmed;
 }
