@@ -8,6 +8,7 @@ import { Login } from "./components/Login";
 import { sections } from "./navigation";
 import { useSession } from "./session";
 import { Categorias } from "./components/Categorias";
+import { Metricas } from "./metrics/Metricas";
 
 function AccessDenied() {
   return (
@@ -19,6 +20,29 @@ function AccessDenied() {
       <p className="mt-2 text-sm text-slate-500">Tu sesión continúa activa.</p>
     </section>
   );
+}
+
+function renderSection(path: string, label: string) {
+  switch (path) {
+    case "/tickets":
+    case "/mis-tickets":
+      return <TicketList />;
+    case "/categorias":
+      return <Categorias />;
+    case "/metricas":
+      return <Metricas />;
+    default:
+      return (
+        <>
+          <h1 className="text-2xl font-bold text-white">{label}</h1>
+          {path !== "/" && (
+            <p className="mt-2 text-slate-400">
+              Esta sección está pendiente de implementación.
+            </p>
+          )}
+        </>
+      );
+  }
 }
 
 function App() {
@@ -55,31 +79,11 @@ function App() {
                 <Route key={path} path={path} element={<AccessDenied />} />
               );
             }
-
             return (
               <Route
                 key={path}
                 path={path}
-                element={
-                  role && roles.includes(role) ? (
-                    path === "/tickets" || path === "/mis-tickets" ? (
-                      <TicketList />
-                    ) : path === "/categorias" ? (
-                      <Categorias />
-                    ) : (
-                      <>
-                        <h1 className="text-2xl font-bold">{label}</h1>
-                        {path !== "/" && (
-                          <p className="mt-2 text-slate-600">
-                            Esta sección está pendiente de implementación.
-                          </p>
-                        )}
-                      </>
-                    )
-                  ) : (
-                    <Navigate to="/" replace />
-                  )
-                }
+                element={renderSection(path, label)}
               />
             );
           })}
