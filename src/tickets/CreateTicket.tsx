@@ -1,3 +1,4 @@
+import { ErrorState, LoadingState } from "../feedback/States";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
@@ -6,7 +7,7 @@ import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 import { createTicket } from "../services/tickets";
-import { getApiErrorMessage } from "../services/apiErrors";
+import { normalizeApiError } from "../services/apiErrors";
 import {
   createTicketSchema,
   type CreateTicketFormValues,
@@ -20,6 +21,7 @@ export function CreateTicket() {
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<CreateTicketFormValues>({
     resolver: zodResolver(createTicketSchema),
@@ -41,12 +43,17 @@ export function CreateTicket() {
 
       navigate("/mis-tickets", { replace: true });
     } catch (error) {
-      setApiError(
-        getApiErrorMessage(
-          error,
-          "No se pudo crear el ticket. Intenta nuevamente.",
-        ),
-      );
+      const normalized = normalizeApiError(error);
+      for (const field of [
+        "titulo",
+        "descripcion",
+        "prioridad",
+        "categoriaId",
+      ] as const) {
+        if (normalized.fields[field])
+          setError(field, { message: normalized.fields[field] });
+      }
+      setApiError(normalized.message);
     }
   });
 
@@ -60,9 +67,7 @@ export function CreateTicket() {
           Volver a mis tickets
         </Link>
 
-        <h1 className="mt-3 text-2xl font-bold">
-          Crear ticket de soporte
-        </h1>
+        <h1 className="mt-3 text-2xl font-bold">Crear ticket de soporte</h1>
 
         <p className="mt-2 text-slate-600">
           Describe tu problema para que nuestro equipo pueda ayudarte.
@@ -88,7 +93,11 @@ export function CreateTicket() {
           />
 
           {errors.titulo && (
-            <span id="titulo-error" role="alert" className="text-sm text-red-700">
+            <span
+              id="titulo-error"
+              role="alert"
+              className="text-sm text-red-700"
+            >
               {errors.titulo.message}
             </span>
           )}
@@ -153,10 +162,13 @@ export function CreateTicket() {
           )}
         </label>
 
+        {isSubmitting && <LoadingState message="Creando ticket…" />}
         {apiError && (
-          <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-700">
-            {apiError}
-          </p>
+          <ErrorState
+            message={apiError}
+            onRetry={() => void submit()}
+            disabled={isSubmitting}
+          />
         )}
 
         <div className="flex flex-wrap justify-end gap-3 border-t border-slate-200 pt-4">

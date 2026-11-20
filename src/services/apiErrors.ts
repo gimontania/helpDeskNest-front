@@ -1,65 +1,88 @@
-
 import { isAxiosError } from "axios";
 
-type ApiErrorResponse = {
-  message?: string | string[];
+export class ApiError extends Error {
+  status?: number;
+  fields: Record<string, string>;
+  retryable: boolean;
+
+  constructor(
+    message: string,
+    status?: number,
+    fields: Record<string, string> = {},
+    retryable = true,
+  ) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.fields = fields;
+    this.retryable = retryable;
+  }
+}
+const fieldLabels: Record<string, string> = {
+  nombre: "el nombre",
+  descripcion: "la descripción",
+  titulo: "el título",
+  prioridad: "la prioridad",
+  categoriaId: "la categoría",
+  agenteId: "el responsable",
+  contenido: "el comentario",
+  email: "el correo",
+  password: "la contraseña",
 };
 
-export function getApiErrorMessage(
+export function normalizeApiError(
   error: unknown,
-  fallback = "Ocurrió un error inesperado.",
-): string {
-  if (!isAxiosError<ApiErrorResponse>(error)) {
-    return fallback;
-  }
-
-  // El servidor no respondió: conexión, CORS o timeout.
+  fallback = "No se pudo completar la operación. Intenta de nuevo.",
+): ApiError {
+  if (error instanceof ApiError) return error;
+  if (!isAxiosError(error)) return new ApiError(fallback);
   if (!error.response) {
-    if (error.code === "ECONNABORTED") {
-      return "El servidor tardó demasiado en responder.";
-    }
-
-    return "No se pudo conectar con el servidor. Comprueba tu conexión.";
+    return new ApiError(
+      error.code === "ECONNABORTED"
+        ? "El servidor tardó demasiado en responder. Intenta de nuevo."
+        : "No se pudo conectar con el servidor. Comprueba tu conexión.",
+    );
   }
 
   const status = error.response.status;
-  const serverMessage = error.response.data?.message;
-
-  switch (status) {
-    case 400:
-      if (Array.isArray(serverMessage)) {
-        return serverMessage.join(". ");
+  const fields: Record<string, string> = {};
+  if (status === 400 || status === 422) {
+    const body = error.response.data;
+    const details: unknown = body?.details ?? body?.message;
+    const messages = Array.isArray(details) ? details : [details];
+    for (const [field, label] of Object.entries(fieldLabels)) {
+      if (
+        messages.some(
+          (message) =>
+            typeof message === "string" &&
+            message.toLowerCase().startsWith(field.toLowerCase() + " "),
+        )
+      ) {
+        fields[field] = "Revisa " + label + ".";
       }
-
-      return serverMessage || "La solicitud contiene datos inválidos.";
-
-    case 401:
-      return "El correo o la contraseña son incorrectos, o la sesión ya no es válida.";
-
-    case 403:
-      return "No tienes permisos para realizar esta operación.";
-
-    case 404:
-      return "No se encontró el recurso solicitado.";
-
-    case 409:
-        if (Array.isArray(serverMessage)) {
-            return serverMessage.join(". ");
-        }
-
-        return serverMessage || "La operación presenta un conflicto.";
-
-    case 500:
-    case 502:
-    case 503:
-    case 504:
-      return "El servidor presenta un problema. Intenta nuevamente.";
-
-    default:
-      if (typeof serverMessage === "string") {
-        return serverMessage;
-      }
-
-      return fallback;
+    }
   }
+
+  const messages: Record<number, string> = {
+    400: "Revisa los datos del formulario.",
+    401: "El correo o la contraseña son incorrectos, o la sesión ya no es válida.",
+    403: "No tienes permisos para realizar esta operación.",
+    404: "No se encontró el recurso solicitado.",
+    409: "Los datos cambiaron o están relacionados con otros registros. Revisa la información e intenta de nuevo.",
+    422: "Revisa los datos del formulario.",
+    429: "Hay demasiadas solicitudes. Espera un momento y vuelve a intentar.",
+  };
+  return new ApiError(
+    messages[status] ??
+      (status >= 500
+        ? "El servicio no está disponible. Intenta de nuevo."
+        : fallback),
+    status,
+    fields,
+    ![400, 401, 403, 404, 422].includes(status),
+  );
+}
+
+export function getApiErrorMessage(error: unknown, fallback?: string): string {
+  return normalizeApiError(error, fallback).message;
 }

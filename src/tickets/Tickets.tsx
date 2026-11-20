@@ -1,5 +1,7 @@
+import { Comments } from "./Comments";
+import { LoadingState, ErrorState } from "../feedback/States";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Calendar, Loader2, Mail, User } from "lucide-react";
+import { ArrowLeft, Calendar, Mail, User } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { z } from "zod";
@@ -13,12 +15,7 @@ import {
 import { getApiErrorMessage } from "../services/apiErrors";
 import { useSession } from "../session";
 import { Assignment } from "./Assignment";
-import {
-  EstadoBadge,
-  PrioridadBadge,
-  CategoryBadge,
-} from "./TicketBadge";
-
+import { EstadoBadge, PrioridadBadge, CategoryBadge } from "./TicketBadge";
 
 export function TicketDetail() {
   const { id = "" } = useParams();
@@ -91,32 +88,15 @@ function TicketContent({ id }: { id: string }) {
 
   if (error)
     return (
-      <div className="rounded-xl bg-rose-500/10 p-4 ring-1 ring-inset ring-rose-500/30">
-        <p role="alert" className="text-sm text-rose-300">
-          No se pudo cargar el ticket.
-        </p>
-        <button
-          type="button"
-          className="mt-3 rounded-lg border border-rose-500/30 px-3 py-1.5 text-sm text-rose-200 hover:bg-rose-500/10"
-          onClick={() => {
-            setError(false);
-            setAttempt((value) => value + 1);
-          }}
-        >
-          Reintentar
-        </button>
-      </div>
+      <ErrorState
+        message="No se pudo cargar el ticket."
+        onRetry={() => {
+          setError(false);
+          setAttempt((value) => value + 1);
+        }}
+      />
     );
-
-  if (!ticket)
-    return (
-      <div
-        role="status"
-        className="flex items-center gap-2 py-10 text-slate-500"
-      >
-        <Loader2 className="h-5 w-5 animate-spin" /> Cargando ticket…
-      </div>
-    );
+  if (!ticket) return <LoadingState message="Cargando ticket…" />;
 
   const nextStatus = obtenerSiguienteEstado(ticket.estado);
   const canChangeStatus = role === "ADMIN" || role === "AGENTE";
@@ -155,6 +135,7 @@ function TicketContent({ id }: { id: string }) {
         </div>
       </div>
 
+      {savingStatus && <LoadingState message="Actualizando estado…" />}
       {canChangeStatus && (
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -172,9 +153,6 @@ function TicketContent({ id }: { id: string }) {
               disabled={savingStatus}
               className="mt-4 inline-flex items-center gap-2 rounded-lg bg-sky-700 px-4 py-2 text-sm font-medium text-white hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {savingStatus && (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              )}
               {savingStatus
                 ? "Actualizando..."
                 : `Cambiar a ${estadoLabel(nextStatus)}`}
@@ -186,9 +164,11 @@ function TicketContent({ id }: { id: string }) {
           )}
 
           {statusError && (
-            <p role="alert" className="mt-3 text-sm text-rose-400">
-              {statusError}
-            </p>
+            <ErrorState
+              message={statusError}
+              onRetry={() => void handleStatusChange()}
+              disabled={savingStatus}
+            />
           )}
         </div>
       )}
@@ -216,6 +196,7 @@ function TicketContent({ id }: { id: string }) {
           </div>
         )}
       </div>
+      <Comments ticketId={id} />
     </section>
   );
 }

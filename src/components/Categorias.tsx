@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { isAxiosError } from "axios";
+import { normalizeApiError, getApiErrorMessage } from "../services/apiErrors";
+import { LoadingState, ErrorState, EmptyState } from "../feedback/States";
 import toast from "react-hot-toast";
 import {
   createCategory,
@@ -21,19 +22,26 @@ export function Categorias() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
-  const cargar = useCallback(async () => {
+  const cargar = useCallback(async (signal?: AbortSignal) => {
+    setLoading(true);
     setLoadError("");
     try {
-      setItems(await listCategories());
-    } catch {
-      setLoadError("No se pudo cargar el catálogo.");
+      const categories = await listCategories(signal);
+      if (!signal?.aborted) setItems(categories);
+    } catch (error) {
+      if (!signal?.aborted)
+        setLoadError(
+          getApiErrorMessage(error, "No se pudo cargar el catálogo."),
+        );
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void cargar();
+    const request = new AbortController();
+    void cargar(request.signal);
+    return () => request.abort();
   }, [cargar]);
 
   async function crear(values: CategoryFormValues) {
@@ -67,14 +75,16 @@ export function Categorias() {
       setSelectedToDelete(null);
       await cargar();
     } catch (error) {
-      if (isAxiosError(error) && error.response?.status === 409) {
+      if (normalizeApiError(error).status === 409) {
         setDeleteError(
           "No se puede eliminar esta categoría porque tiene tickets asociados.",
         );
-      } else if (isAxiosError(error) && error.response?.status === 403) {
+      } else if (normalizeApiError(error).status === 403) {
         setDeleteError("Tu rol no tiene permiso para eliminar categorías.");
       } else {
-        setDeleteError("No se pudo eliminar la categoría. Intentá nuevamente.");
+        setDeleteError(
+          getApiErrorMessage(error, "No se pudo eliminar la categoría."),
+        );
       }
     } finally {
       setDeleting(false);
@@ -87,25 +97,12 @@ export function Categorias() {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
         <section aria-label="Listado de categorías">
-          {loading && <p>Cargando…</p>}
-
+          {loading && <LoadingState message="Cargando categorías…" />}
           {loadError && (
-            <p role="alert" className="text-red-700">
-              {loadError}{" "}
-              <button
-                className="underline"
-                onClick={() => {
-                  setLoading(true);
-                  void cargar();
-                }}
-              >
-                Reintentar
-              </button>
-            </p>
+            <ErrorState message={loadError} onRetry={() => void cargar()} />
           )}
-
           {!loading && !loadError && items.length === 0 && (
-            <p className="text-slate-600">Aún no hay categorías.</p>
+            <EmptyState message="Aún no hay categorías." />
           )}
 
           <ul className="grid gap-2">
@@ -180,9 +177,11 @@ export function Categorias() {
             </p>
 
             {deleteError && (
-              <p role="alert" className="mt-4 text-sm text-red-700">
-                {deleteError}
-              </p>
+              <ErrorState
+                message={deleteError}
+                onRetry={() => void eliminar()}
+                disabled={deleting}
+              />
             )}
 
             <div className="mt-6 flex justify-end gap-3">

@@ -1,6 +1,6 @@
 import axios from "axios";
 import toast from "react-hot-toast";
-import { getApiErrorMessage } from "./apiErrors";
+import { normalizeApiError } from "./apiErrors";
 
 export const tokenKey = "helpdesknest.access_token";
 
@@ -60,16 +60,11 @@ api.interceptors.response.use(
         toast.error("Tu sesión expiró. Inicia sesión de nuevo.", {
           id: "session-expired",
         });
-      } else if (status === 403) {
-        toast.error(
-          "Acceso denegado: no tienes permisos para esta operación.",
-          { id: "forbidden" },
-        );
-      } else if (!error.response && !axios.isCancel(error)) {
-        toast.error(getApiErrorMessage(error), { id: "network-error" });
       }
     }
-    return Promise.reject(error);
+    return Promise.reject(
+      axios.isCancel(error) ? error : normalizeApiError(error),
+    );
   },
 );
 
