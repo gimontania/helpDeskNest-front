@@ -8,10 +8,6 @@ import {
 } from "../services/notifications";
 import { useSession } from "../session";
 
-/**
- * Conecta al canal de avisos en tiempo real mientras haya sesión.
- * Se desconecta y limpia los listeners al salir, cerrar sesión o expirar.
- */
 export function useNotifications() {
   const sessionKey = useSession((state) =>
     state.session ? state.session.expiresAt : null,
@@ -37,7 +33,6 @@ export function useNotifications() {
     };
 
     const onConnectError = () => {
-      // Un solo aviso discreto; la app sigue funcionando sin tiempo real.
       toast("Avisos en tiempo real no disponibles por ahora.", {
         id: "realtime-unavailable",
       });

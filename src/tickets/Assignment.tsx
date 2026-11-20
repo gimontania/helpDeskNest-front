@@ -119,7 +119,6 @@ export function Assignment({
           disabled={saving}
         />
       )}
-      {message && <SuccessState message={message} />}
       {saving && <LoadingState message="Asignando responsable…" />}
     </form>
   );
