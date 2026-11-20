@@ -1,5 +1,6 @@
 import { z } from "zod";
 import api from "./api";
+import type { CreateTicketFormValues } from "../schemas/createTicketSchema";
 
 export const estados = [
   "ABIERTO",
@@ -66,6 +67,15 @@ export async function listTickets(signal: AbortSignal) {
 export async function getTicket(id: string, signal: AbortSignal) {
   const { data } = await api.get("/tareas/" + id, { signal });
   return ticketSchema.parse(data);
+}
+
+export async function createTicket(values: CreateTicketFormValues): Promise<void> {
+  await api.post("/tareas", {
+    titulo: values.titulo,
+    descripcion: values.descripcion,
+    prioridad: values.prioridad,
+    categoriaId: values.categoriaId,
+  });
 }
 
 export async function listAgents(signal: AbortSignal) {

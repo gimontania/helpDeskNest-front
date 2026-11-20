@@ -3,21 +3,27 @@ import { TicketList } from "./tickets/TicketList";
 import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import { Navigate, Route, Routes } from "react-router-dom";
+
 import { AppLayout } from "./components/AppLayout";
 import { Login } from "./components/Login";
+import { Categorias } from "./components/Categorias";
+import { CreateTicket } from "./tickets/CreateTicket";
 import { sections } from "./navigation";
 import { useSession } from "./session";
-import { Categorias } from "./components/Categorias";
 import { Metricas } from "./metrics/Metricas";
 
 function AccessDenied() {
   return (
     <section className="mx-auto max-w-xl rounded-xl border border-red-200 bg-white p-6">
-      <h1 className="text-2xl font-bold text-red-700">403 - Acceso denegado</h1>
+      <h1 className="text-2xl font-bold text-red-700">
+        403 - Acceso denegado
+      </h1>
       <p className="mt-3 text-slate-600">
-        No tenés permisos para acceder a esta sección.
+        No tienes permisos para acceder a esta sección.
       </p>
-      <p className="mt-2 text-sm text-slate-500">Tu sesión continúa activa.</p>
+      <p className="mt-2 text-sm text-slate-500">
+        Tu sesión continúa activa.
+      </p>
     </section>
   );
 }
@@ -27,6 +33,8 @@ function renderSection(path: string, label: string) {
     case "/tickets":
     case "/mis-tickets":
       return <TicketList />;
+    case "/tickets/nuevo":
+      return <CreateTicket />;
     case "/categorias":
       return <Categorias />;
     case "/metricas":
@@ -69,6 +77,7 @@ function App() {
   return (
     <>
       <Toaster />
+
       <Routes>
         <Route path="/login" element={<Login />} />
 
@@ -76,17 +85,13 @@ function App() {
           {sections.map(({ path, label, roles }) => {
             if (!role || !roles.includes(role)) {
               return (
-                <Route key={path} path={path} element={<AccessDenied />} />
+                <Route
+                  key={path}
+                  path={path}
+                  element={<AccessDenied />}
+                />
               );
             }
-            return (
-              <Route
-                key={path}
-                path={path}
-                element={renderSection(path, label)}
-              />
-            );
-          })}
 
           <Route path="/tickets/:id" element={<TicketDetail />} />
           <Route path="*" element={<Navigate to="/" replace />} />

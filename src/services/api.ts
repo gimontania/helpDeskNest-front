@@ -65,7 +65,7 @@ api.interceptors.response.use(
           "Acceso denegado: no tienes permisos para esta operación.",
           { id: "forbidden" },
         );
-      } else if (!error.response) {
+      } else if (!error.response && !axios.isCancel(error)) {
         toast.error(getApiErrorMessage(error), { id: "network-error" });
       }
     }

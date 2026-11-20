@@ -18,6 +18,7 @@ import {
   CategoryBadge,
 } from "./TicketBadge";
 
+
 export function TicketDetail() {
   const { id = "" } = useParams();
 
