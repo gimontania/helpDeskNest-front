@@ -12,6 +12,7 @@ import {
   type Agent,
   type Ticket,
 } from "../services/tickets";
+import toast from "react-hot-toast";
 
 export function Assignment({
   ticket,
@@ -26,7 +27,6 @@ export function Assignment({
   const [attempt, setAttempt] = useState(0);
   const [selected, setSelected] = useState("");
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -56,12 +56,11 @@ export function Assignment({
       return;
     setSaving(true);
     setError("");
-    setMessage("");
     try {
       const confirmed = await assignAgent(ticket.id, selected);
       onAssigned(confirmed);
       setSelected("");
-      setMessage("Responsable actualizado.");
+      toast.success("Responsable actualizado.", { id: "assign-success" });
     } catch (error) {
       setError(getApiErrorMessage(error));
     } finally {
@@ -93,7 +92,6 @@ export function Assignment({
           onChange={(event) => {
             setSelected(event.target.value);
             setError("");
-            setMessage("");
           }}
           disabled={saving}
           required

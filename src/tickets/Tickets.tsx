@@ -1,8 +1,9 @@
 import { Comments } from "./Comments";
-import { LoadingState, ErrorState, SuccessState } from "../feedback/States";
+import { LoadingState, ErrorState } from "../feedback/States";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Calendar, Mail, User } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
+import toast from "react-hot-toast";
 import { z } from "zod";
 import {
   getTicket,
@@ -33,7 +34,6 @@ function TicketContent({ id }: { id: string }) {
   const [attempt, setAttempt] = useState(0);
   const [savingStatus, setSavingStatus] = useState(false);
   const [statusError, setStatusError] = useState("");
-  const [statusMessage, setStatusMessage] = useState("");
   const statusRequest = useRef(false);
 
   useEffect(() => {
@@ -60,7 +60,6 @@ function TicketContent({ id }: { id: string }) {
     statusRequest.current = true;
     setSavingStatus(true);
     setStatusError("");
-    setStatusMessage("");
 
     try {
       const confirmed = await changeTicketStatus(ticket.id, nextStatus);
@@ -69,7 +68,9 @@ function TicketContent({ id }: { id: string }) {
         current ? { ...current, estado: confirmed.estado } : current,
       );
 
-      setStatusMessage("Estado actualizado correctamente.");
+      toast.success("Estado actualizado correctamente.", {
+        id: "status-success",
+      });
     } catch (error) {
       setStatusError(
         getApiErrorMessage(
@@ -169,8 +170,6 @@ function TicketContent({ id }: { id: string }) {
               disabled={savingStatus}
             />
           )}
-
-          {statusMessage && <SuccessState message={statusMessage} />}
         </div>
       )}
 

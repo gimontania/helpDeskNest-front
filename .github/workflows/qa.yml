@@ -1,0 +1,32 @@
+name: QA SPA
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validar-spa:
+    name: Compilación y lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VITE_API_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - name: Instalar pnpm
+        run: npm install --global pnpm@11.22.0
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+      - name: Validar código
+        run: pnpm lint
+      - name: Compilar SPA
+        run: pnpm build
