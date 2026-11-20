@@ -30,7 +30,12 @@ function timeAgo(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
-export function TicketList() {
+export function TicketList({
+  soloAsignados = false,
+}: {
+  soloAsignados?: boolean;
+}) {
+  const userId = useSession((s) => s.session?.id);
   const role = useSession((s) => s.session?.role);
   const [state, setState] = useState<State>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
@@ -55,10 +60,12 @@ export function TicketList() {
     return () => request.abort();
   }, [attempt]);
 
-  const tickets = useMemo(
-    () => (state.status === "ready" ? state.tickets : []),
-    [state],
-  );
+  const tickets = useMemo(() => {
+    if (state.status !== "ready") return [];
+    return soloAsignados
+      ? state.tickets.filter((t) => t.agenteId === userId)
+      : state.tickets;
+  }, [state, soloAsignados, userId]);
 
   const categorias = useMemo(() => {
     const map = new Map<string, string>();
@@ -72,7 +79,11 @@ export function TicketList() {
       (!categoriaId || t.categoriaId === categoriaId),
   );
   const hayFiltros = estado !== "" || categoriaId !== "";
-  const titulo = role === "EMPLEADO" ? "Mis tickets" : "Bandeja de tickets";
+  const titulo = soloAsignados
+    ? "Tickets Asigandos"
+    : role === "EMPLEADO"
+      ? "Mis tickets"
+      : "Bandeja de tickets";
 
   return (
     <section className="grid gap-5">

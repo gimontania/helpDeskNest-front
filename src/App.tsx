@@ -29,6 +29,8 @@ function renderSection(path: string, label: string) {
     case "/tickets":
     case "/mis-tickets":
       return <TicketList />;
+    case "/tickets/asignados":
+      return <TicketList soloAsignados />;
     case "/tickets/nuevo":
       return <CreateTicket />;
     case "/categorias":

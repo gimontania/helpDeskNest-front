@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 import api, {
   setUnauthorizedHandler,
@@ -9,6 +8,7 @@ const roles = ["ADMIN", "AGENTE", "EMPLEADO"] as const;
 export type Role = (typeof roles)[number];
 
 type Session = {
+  id: string;
   email: string;
   role: Role;
   expiresAt: number;
@@ -33,19 +33,15 @@ function readToken(token: string): Session | null {
       return null;
     }
 
-    const base64 = parts[1]
-      .replace(/-/g, "+")
-      .replace(/_/g, "/");
+    const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
 
-    const padded = base64.padEnd(
-      Math.ceil(base64.length / 4) * 4,
-      "=",
-    );
+    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
 
     const claims = JSON.parse(atob(padded));
 
     if (
       !roles.includes(claims.rol) ||
+      typeof claims.sub !== "string" ||
       typeof claims.email !== "string" ||
       !Number.isFinite(claims.exp) ||
       claims.exp * 1000 <= Date.now()
@@ -54,6 +50,7 @@ function readToken(token: string): Session | null {
     }
 
     return {
+      id: claims.sub,
       email: claims.email,
       role: claims.rol,
       expiresAt: claims.exp * 1000,
@@ -71,10 +68,10 @@ export const useSession = create<{
   session: restoreSession(),
 
   async login(email, password) {
-    const { data } = await api.post<{ access_token: string }>(
-      "/auth/login",
-      { email, password },
-    );
+    const { data } = await api.post<{ access_token: string }>("/auth/login", {
+      email,
+      password,
+    });
 
     const session = readToken(data.access_token);
 
