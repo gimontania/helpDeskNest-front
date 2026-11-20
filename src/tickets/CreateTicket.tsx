@@ -33,6 +33,11 @@ export function CreateTicket() {
     },
   });
 
+  const inputClass =
+    "w-full rounded-lg border border-slate-700 bg-slate-800 px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 aria-[invalid=true]:border-rose-500 disabled:opacity-60";
+  const labelClass = "text-sm font-medium text-slate-200";
+  const errorClass = "text-sm text-rose-400";
+
   const submit = handleSubmit(async (values) => {
     setApiError("");
 
@@ -62,14 +67,15 @@ export function CreateTicket() {
       <div>
         <Link
           to="/mis-tickets"
-          className="text-sm font-medium text-sky-800 underline"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-sky-400 hover:text-sky-300"
         >
-          Volver a mis tickets
+          ← Volver a mis tickets
         </Link>
 
-        <h1 className="mt-3 text-2xl font-bold">Crear ticket de soporte</h1>
-
-        <p className="mt-2 text-slate-600">
+        <h1 className="mt-3 text-2xl font-bold text-white">
+          Crear ticket de soporte
+        </h1>
+        <p className="mt-1.5 text-sm text-slate-400">
           Describe tu problema para que nuestro equipo pueda ayudarte.
         </p>
       </div>
@@ -77,35 +83,28 @@ export function CreateTicket() {
       <form
         onSubmit={submit}
         noValidate
-        className="grid gap-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+        className="grid gap-5 rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl shadow-black/20"
       >
-        <label className="grid gap-2">
-          <span className="font-medium">Título del problema</span>
-
+        <label className="grid gap-1.5">
+          <span className={labelClass}>Título del problema</span>
           <input
             type="text"
             maxLength={200}
             placeholder="Ej. No puedo ingresar al sistema"
             aria-invalid={!!errors.titulo}
             aria-describedby={errors.titulo ? "titulo-error" : undefined}
-            className="rounded-md border border-slate-300 p-3 outline-none focus:border-sky-700 focus:ring-2 focus:ring-sky-100"
+            className={inputClass}
             {...register("titulo")}
           />
-
           {errors.titulo && (
-            <span
-              id="titulo-error"
-              role="alert"
-              className="text-sm text-red-700"
-            >
+            <span id="titulo-error" role="alert" className={errorClass}>
               {errors.titulo.message}
             </span>
           )}
         </label>
 
-        <label className="grid gap-2">
-          <span className="font-medium">Descripción del problema</span>
-
+        <label className="grid gap-1.5">
+          <span className={labelClass}>Descripción del problema</span>
           <textarea
             rows={5}
             placeholder="Explica qué ocurrió y qué necesitas solucionar..."
@@ -113,39 +112,32 @@ export function CreateTicket() {
             aria-describedby={
               errors.descripcion ? "descripcion-error" : undefined
             }
-            className="resize-y rounded-md border border-slate-300 p-3 outline-none focus:border-sky-700 focus:ring-2 focus:ring-sky-100"
+            className={`${inputClass} resize-y`}
             {...register("descripcion")}
           />
-
           {errors.descripcion && (
-            <span
-              id="descripcion-error"
-              role="alert"
-              className="text-sm text-red-700"
-            >
+            <span id="descripcion-error" role="alert" className={errorClass}>
               {errors.descripcion.message}
             </span>
           )}
         </label>
 
-        <div className="grid gap-2">
+        <div className="grid gap-1.5">
           <CategorySelect
             {...register("categoriaId")}
             aria-invalid={!!errors.categoriaId}
           />
-
           {errors.categoriaId && (
-            <span role="alert" className="text-sm text-red-700">
+            <span role="alert" className={errorClass}>
               {errors.categoriaId.message}
             </span>
           )}
         </div>
 
-        <label className="grid gap-2">
-          <span className="font-medium">Prioridad</span>
-
+        <label className="grid gap-1.5">
+          <span className={labelClass}>Prioridad</span>
           <select
-            className="rounded-md border border-slate-300 bg-white p-3 outline-none focus:border-sky-700 focus:ring-2 focus:ring-sky-100"
+            className={`${inputClass} [&>option]:bg-slate-800`}
             aria-invalid={!!errors.prioridad}
             {...register("prioridad")}
           >
@@ -154,9 +146,8 @@ export function CreateTicket() {
             <option value="ALTA">Alta</option>
             <option value="URGENTE">Urgente</option>
           </select>
-
           {errors.prioridad && (
-            <span role="alert" className="text-sm text-red-700">
+            <span role="alert" className={errorClass}>
               {errors.prioridad.message}
             </span>
           )}
@@ -171,18 +162,17 @@ export function CreateTicket() {
           />
         )}
 
-        <div className="flex flex-wrap justify-end gap-3 border-t border-slate-200 pt-4">
+        <div className="flex flex-wrap justify-end gap-3 border-t border-slate-800 pt-5">
           <Link
             to="/mis-tickets"
-            className="rounded-md border border-slate-300 px-4 py-2 hover:bg-slate-100"
+            className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
           >
             Cancelar
           </Link>
-
           <button
             type="submit"
             disabled={isSubmitting}
-            className="rounded-md bg-sky-800 px-5 py-2 font-semibold text-white hover:bg-sky-900 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-lg bg-sky-600 px-5 py-2 text-sm font-semibold text-white hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSubmitting ? "Creando ticket..." : "Crear ticket"}
           </button>
