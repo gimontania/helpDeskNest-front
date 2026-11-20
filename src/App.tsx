@@ -15,15 +15,11 @@ import { Metricas } from "./metrics/Metricas";
 function AccessDenied() {
   return (
     <section className="mx-auto max-w-xl rounded-xl border border-red-200 bg-white p-6">
-      <h1 className="text-2xl font-bold text-red-700">
-        403 - Acceso denegado
-      </h1>
+      <h1 className="text-2xl font-bold text-red-700">403 - Acceso denegado</h1>
       <p className="mt-3 text-slate-600">
         No tienes permisos para acceder a esta sección.
       </p>
-      <p className="mt-2 text-sm text-slate-500">
-        Tu sesión continúa activa.
-      </p>
+      <p className="mt-2 text-sm text-slate-500">Tu sesión continúa activa.</p>
     </section>
   );
 }
@@ -85,13 +81,18 @@ function App() {
           {sections.map(({ path, label, roles }) => {
             if (!role || !roles.includes(role)) {
               return (
-                <Route
-                  key={path}
-                  path={path}
-                  element={<AccessDenied />}
-                />
+                <Route key={path} path={path} element={<AccessDenied />} />
               );
             }
+
+            return (
+              <Route
+                key={path}
+                path={path}
+                element={renderSection(path, label)}
+              />
+            );
+          })}
 
           <Route path="/tickets/:id" element={<TicketDetail />} />
           <Route path="*" element={<Navigate to="/" replace />} />
